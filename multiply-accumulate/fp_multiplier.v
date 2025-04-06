@@ -1,6 +1,6 @@
 module qmult #(
-    parameter Q = 5,
-    parameter N = 8
+    parameter Q = 24,
+    parameter N = 32
 ) (
     input [N-1:0] i_multiplicand,
     input [N-1:0] i_multiplier,

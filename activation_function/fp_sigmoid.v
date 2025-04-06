@@ -1,3 +1,5 @@
+// https://www.mdpi.com/2079-9292/11/9/1365
+
 module sigmoid #(
     parameter Q = 24,
     parameter N = 32

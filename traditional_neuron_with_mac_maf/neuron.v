@@ -48,38 +48,72 @@ always @(posedge clk or negedge rst_n) begin
 end
 
 // Pipeline Stage 2: Parallel Multiplication
-reg signed [2*DATA_WIDTH-1:0] products [N_INPUTS-1:0];
+wire [2*DATA_WIDTH-1:0] mult_results [N_INPUTS-1:0];
+reg [2*DATA_WIDTH-1:0] mult_results_reg [N_INPUTS-1:0];
 
 genvar i;
+
 generate
     for (i=0; i<N_INPUTS; i=i+1) begin : MULT
+        qmult #(.Q(Q), .N(DATA_WIDTH)) mult (
+            .i_multiplicand(x_buf[i]),
+            .i_multiplier(w_buf[i]),
+            .o_result(mult_results[i]),
+            .ovr()  // Overflow monitoring optional
+        );
+        
         always @(posedge clk or negedge rst_n) begin
-            if (!rst_n) products[i] <= 0;
-            else products[i] <= x_buf[i] * w_buf[i]; // Q24 * Q24 = Q48
+            if (!rst_n) mult_results_reg[i] <= 0;
+            else mult_results_reg[i] <= mult_results[i];
         end
     end
 endgenerate
 
-// Pipeline Stage 3: Accumulation and Bias Addition
-reg signed [2*DATA_WIDTH-1:0] sum_products;
-reg signed [DATA_WIDTH-1:0]   sum_with_bias;
+// Stage 3: Accumulation Tree
+wire [2*DATA_WIDTH-1:0] sum_stage1 [N_INPUTS/2-1:0];
+wire [2*DATA_WIDTH-1:0] sum_stage2;
 
-always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-        sum_products  <= 0;
-        sum_with_bias <= 0;
+generate
+    // First level of addition (pairwise)
+    for (i=0; i<N_INPUTS/2; i=i+1) begin : ADD_STAGE1
+        qadd #(.Q(2*Q), .N(2*DATA_WIDTH)) adder (
+            .a(mult_results_reg[2*i]),
+            .b(mult_results_reg[2*i+1]),
+            .c(sum_stage1[i]),
+            .ovr()
+        );
+    end
+    
+    // Second level of addition (final sum)
+    if (N_INPUTS > 2) begin : ADD_STAGE2
+        qadd #(.Q(2*Q), .N(2*DATA_WIDTH)) final_adder (
+            .a(sum_stage1[0]),
+            .b(sum_stage1[1]),
+            .c(sum_stage2),
+            .ovr()
+        );
     end else begin
-        // Sum all products
-        sum_products = 0;
-        for (j=0; j<N_INPUTS; j=j+1) begin
-            sum_products += products[j];
-        end
-        
-        // Add bias (convert to Q48)
-        sum_products += (bias_buf << Q);
-        
-        // Convert back to Q24 format
-        sum_with_bias <= sum_products >>> Q;  
+        assign sum_stage2 = sum_stage1[0];
+    end
+endgenerate
+
+// Stage 4: Bias Addition
+wire [2*DATA_WIDTH-1:0] bias_ext = {bias_buf, {Q{1'b0}}}; // Q24 -> Q48
+wire [2*DATA_WIDTH-1:0] sum_with_bias_wire;
+
+qadd #(.Q(2*Q), .N(2*DATA_WIDTH)) bias_adder (
+    .a(sum_stage2),
+    .b(bias_ext),
+    .c(sum_with_bias_wire),
+    .ovr()
+);
+
+reg [DATA_WIDTH-1:0] sum_with_bias;
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) sum_with_bias <= 0;
+    else begin
+        // Truncate from Q48 to Q24 with rounding
+        sum_with_bias <= sum_with_bias_wire[Q +: DATA_WIDTH];
     end
 end
 
@@ -184,8 +218,8 @@ initial begin
     // Q24 format values (1.0 = 32'h01000000)
     x0 = 32'h01000000;  // 1.0
     x1 = 32'h02000000;  // 2.0
-    x2 = 32'h03000000;  // 3.0
-    x3 = 32'h04000000;  // 4.0
+    x2 = 32'h01000000;  // 3.0
+    x3 = 32'h01000000;  // 4.0
     
     w0 = 32'h01000000;  // 1.0
     w1 = 32'h01000000;  // 1.0

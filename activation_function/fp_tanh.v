@@ -5,47 +5,43 @@ module tanh #(
     input [N-1:0] x,
     output [N-1:0] y
 );
-    // Constants in Q24 format
-    localparam [N-1:0] TWO       = 32'b00000010000000000000000000000000; // 2.0
-    localparam [N-1:0] NEG_ONE   = 32'b10000001000000000000000000000000; // -1.0 (sign-magnitude)
+    localparam [N-1:0] TWO       = 32'b00000010000000000000000000000000; // +2.0
+    localparam [N-1:0] ONE       = 32'b00000001000000000000000000000000; // +1.0
+    localparam [N-1:0] NEG_ONE   = 32'b10000001000000000000000000000000; // -1.0
     
-    // Signals for intermediate results
-    wire [N-1:0] doubled_x;
+    wire [2*N-1:0] doubled_x;
     wire [N-1:0] sigmoid_result;
-    wire [2*N-1:0] mult_result;
-    wire [N-1:0] mult_trunc;
+    wire [2*N-1:0] scaled_sigmoid;
     wire [N-1:0] final_result;
-    wire ovr_mult1, ovr_mult2, ovr_add;
     
-    // Double the input x using left shift
-    assign doubled_x = {x[N-1], x[N-3:0], 1'b0};
-    
-    // Calculate sigmoid(2x)
+    qmult #(.Q(Q), .N(N)) double_mult (
+        .i_multiplicand(x),
+        .i_multiplier(TWO),
+        .o_result(doubled_x), 
+        .ovr()
+    );
+
     sigmoid #(.Q(Q), .N(N)) sigmoid_inst (
-        .x(doubled_x),
+        .x(doubled_x[N-1:0]), 
         .y(sigmoid_result)
     );
     
-    // Multiply sigmoid result by 2
-    qmult #(.Q(Q), .N(N)) mult_sigmoid_by_2 (
+    qmult #(.Q(Q), .N(N)) scale_mult (
         .i_multiplicand(sigmoid_result),
         .i_multiplier(TWO),
-        .o_result(mult_result),
-        .ovr(ovr_mult2)
+        .o_result(scaled_sigmoid),
+        .ovr()
     );
     
-    // Extract the proper bits from 2*sigmoid(2x)
-    assign mult_trunc = {mult_result[2*N-1], mult_result[Q+N-2:Q]};
-    
-    // Subtract 1: 2*sigmoid(2x) - 1
-    qadd #(.Q(Q), .N(N)) subtract_one (
-        .a(mult_trunc),
-        .b(NEG_ONE), // -1 in sign-magnitude
+    qadd #(.Q(Q), .N(N)) subtr (
+        .a(scaled_sigmoid[N-1:0]),
+        .b(ONE),  
         .c(final_result),
-        .ovr(ovr_add)
+        .ovr()
     );
     
-    // Output assignment
-    assign y = final_result;
+    assign y = final_result[N-1] ? 
+        {1'b1, final_result[N-2:0]} :  // Maintain sign-magnitude
+        final_result;
     
 endmodule

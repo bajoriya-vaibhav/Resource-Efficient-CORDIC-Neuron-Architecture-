@@ -1,3 +1,11 @@
+/*
+This code is the test bench for testing lookup table retrieval in case of CORDIC
+hyperbolic mode. 
+
+SF is basically the conversion factor for our fixed point representation which should be 
+equivalent to shifting a number by the float size accordingly.
+*/
+
 `timescale 10ns / 100ps
 module atanh_LOOKUP_tb;
     localparam FLOAT_SIZE = 24;

@@ -1,33 +1,32 @@
+/*
+This code uses CORDIC linear mode the calculate MAC(Multiply-Accumulate) operation, readme 
+file contains detailed explanation on cordic algorithm. Refer for theoritical understanding.
+The mac output calculated is x*z + y
+
+All numbers are in Q7.24 format
+*/
+
 module cordic_linear_mode #(
     parameter ITERATIONS = 24  // CORDIC iterations (matches fractional precision)
 )(
     input wire clk,
     input wire rst,
-    input wire signed [31:0] x_in,  // Q8.24 format
-    input wire signed [31:0] y_in,  // Q8.24 format
-    input wire signed [31:0] z_in,  // scalar multiplier in Q8.24
+    input wire signed [31:0] x_in,
+    input wire signed [31:0] y_in,  
+    input wire signed [31:0] z_in,  
     output reg signed [31:0] x_out,
-    output reg signed [31:0] y_out
+    output reg signed [31:0] y_out // this signal will contain the final mac output
 );
 
-    // Internal registers
+    // Internal registers, used for iterations
     reg signed [31:0] x ;
     reg signed [31:0] y ;
     reg signed [31:0] z ;
-
-    // reg signed [31:0] x_new ;
-    // reg signed [31:0] y_new ;
-    // reg signed [31:0] z_new ;
     
-    integer i;
+    integer i; // iteration count 
 
     always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            // for (i = 0; i <= ITERATIONS; i = i + 1) begin
-            //     x <= x_in;
-            //     y <= y_in;
-            //     z <= z_in;
-            // end
+        if (rst) begin // reset signal initialization
             x <= x_in;
             y <= y_in;
             z <= z_in;
@@ -35,13 +34,6 @@ module cordic_linear_mode #(
             y_out <= 0;
             i = 0;
         end else begin
-            // Initialization
-            // x[0] <= x_in;
-            // y[0] <= y_in;
-            // z[0] <= z_in;
-
-            // Iterative CORDIC in linear mode
-            // for (i = 0; i < ITERATIONS; i = i + 1) begin
             if (i < ITERATIONS) 
             begin
                 if (z[31] == 0) begin  // z >= 0
@@ -56,18 +48,11 @@ module cordic_linear_mode #(
                 i = i+1;
             end
             
-            // end
 
             // Outputs
             x_out <= x;
             y_out <= y;
         end
     end
-
-    // always @(negedge clk) begin
-    //     x <= x_new;
-    //     y <= y_new;
-    //     z <= z_new;
-    // end
 
 endmodule

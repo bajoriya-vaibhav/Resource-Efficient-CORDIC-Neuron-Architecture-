@@ -1,3 +1,10 @@
+/*
+This module combines the two modules used for the calculation of the MAC and hyperbolic tangent
+function to complete the architecture of the neuron.
+This code has been written in FSM design to maximise resource sharing optimisation during 
+RTL synthesis. 
+*/
+
 module cordic_combined #(
     parameter MAC_ITERATIONS = 24,
     parameter INT_SIZE = 8,
@@ -6,11 +13,11 @@ module cordic_combined #(
     input wire clk,
     input wire rst,
     input wire start,
-    input wire signed [31:0] x_in,  // Q8.24 format
-    input wire signed [31:0] y_in,  // Q8.24 format
-    input wire signed [31:0] z_in,  // scalar multiplier in Q8.24
-    output wire signed [31:0] mac_x_out,  // Added MAC x output
-    output wire signed [31:0] mac_y_out,  // Added MAC y output
+    input wire signed [31:0] x_in,  
+    input wire signed [31:0] y_in,  
+    input wire signed [31:0] z_in,  
+    output wire signed [31:0] mac_x_out, 
+    output wire signed [31:0] mac_y_out, // this signal is used to display mac output during simulation
     output wire signed [31:0] tanh_out,
     output reg done
 );

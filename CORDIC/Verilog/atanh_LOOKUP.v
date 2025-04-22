@@ -1,3 +1,14 @@
+/*
+This is the lookup table for hyperbolic CORDIC calculation. This lookup table is only 
+valid for the 32 signed bit number representation of 7 integer bits and 24 floating point
+bits(1 signed bit of course). 
+
+Lookup table may need to modified in case of different number representation. If the 
+representation is a concatenation of the current representation (example - 16 bit
+representation with 7 integer bits and 8 floating bits) then verilog concantenation can 
+be directly used without modifying the lookup table. 
+*/
+
 module atanh_LOOKUP(index, value);
     localparam FLOAT_SIZE = 24;
     localparam INT_SIZE = 8;

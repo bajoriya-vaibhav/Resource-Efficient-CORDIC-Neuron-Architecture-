@@ -46,8 +46,8 @@ module cordictanh_tb;
         idx = 0;
         failed_n = 0;
         passed_n = 0;
-        $readmemb("./input_b.txt", inputs);
-        $readmemb("./output_b.txt", actual_values);
+        $readmemb("../Matlab/input_b.txt", inputs);
+        $readmemb("../Matlab/output_b.txt", actual_values);
         output_file = $fopen("cordictanh_tb.txt", "w");
 		$fwrite(output_file, "[START]\n");
         repeat (N_TESTS)
@@ -60,11 +60,10 @@ module cordictanh_tb;
             if (result == actual_values[idx])
             begin
                 $fwrite(output_file, "[PASSED] :)       ",
-                            "TEST:{%03d", idx, "/%03d", N_TESTS-1, "}\n",
-                            " INPUT=%d(%f)", z, $itor(z*SF),
-                            " CALCULATED=%d(%f)", result, $itor(result*SF),
-                            " ACTUAL=%d(%f)\n", actual_values[idx], $itor(actual_values[idx]*SF)
-                            );
+                            "TEST:{%03d", idx, "/%03d", N_TESTS-1, "}", "\n>>> ", $time,
+                        " INPUT=%h(%f)", z, $itor(z*SF),
+                        " CALCULATED=%h(%f)", result, $itor(result*SF),
+                        " ACTUAL=%h(%f)\n", actual_values[idx], $itor(actual_values[idx]*SF));
                 passed_n = passed_n + 1;
             end
             else

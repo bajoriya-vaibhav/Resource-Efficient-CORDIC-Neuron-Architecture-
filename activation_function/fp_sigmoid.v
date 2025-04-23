@@ -41,13 +41,12 @@ module sigmoid #(
     wire [N-1:0] sum;
     wire ovr_mult, ovr_add;
     
-    // magnitude and the sign bit of x
     wire [N-2:0] x_mag = x[N-2:0];
     wire x_sign = x[N-1];
     
     // coefficient selection logic
     always @(*) begin
-        if (x_sign == 1'b1) begin  // Negative x
+        if (x_sign == 1'b1) begin  
             if (x_mag >= T_8[N-2:0]) begin  // |x| >= 8.0
                 slope = 32'b00000000000000000000000000000000;  // 0
                 intercept = 32'b00000000000000000000000000000000;  // 0
@@ -67,7 +66,7 @@ module sigmoid #(
                 slope = SLOPE5;
                 intercept = INTERCEPT5;
             end
-        end else begin  // Positive x
+        end else begin
             if (x_mag >= T_8[N-2:0]) begin  // x >= 8.0
                 slope = 32'b00000000000000000000000000000000;  // 0
                 intercept = 32'b00000001000000000000000000000000;  // 1.0
@@ -90,7 +89,6 @@ module sigmoid #(
         end
     end
 
-    // Fixed-point multiplication
     qmult #(.Q(Q), .N(N)) mult (
         .i_multiplicand(x),
         .i_multiplier(slope),
@@ -98,11 +96,8 @@ module sigmoid #(
         .ovr(ovr_mult)
     );
 
-    // Extract the proper bits from the product
-    // For Q24, we need bits [55:24] of the 64-bit product
     assign product_trunc = {product[2*N-1], product[Q+N-2:Q]};
 
-    // Fixed-point addition
     qadd #(.Q(Q), .N(N)) add (
         .a(product_trunc),
         .b(intercept),
@@ -110,7 +105,6 @@ module sigmoid #(
         .ovr(ovr_add)
     );
 
-    // Final output selection with proper sign handling
     assign y = (x_sign == 1'b1 && x_mag >= T_8[N-2:0]) ? 32'b00000000000000000000000000000000 :  // 0.0 for x <= -8.0
                (x_sign == 1'b0 && x_mag >= T_8[N-2:0]) ? 32'b00000001000000000000000000000000 :  // 1.0 for x >= 8.0
                sum;

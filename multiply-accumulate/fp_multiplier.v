@@ -10,13 +10,11 @@ module qmult #(
 
     reg [2*N-2:0] magnitude_product;
     reg sign_bit;
-    // Threshold for overflow: (2^(N-1) - 1) << Q
     localparam THRESHOLD = ( (1 << (N-1)) - 1 ) << Q;
 
     always @(*) begin
         magnitude_product = i_multiplicand[N-2:0] * i_multiplier[N-2:0];
         sign_bit = i_multiplicand[N-1] ^ i_multiplier[N-1];
-        // Overflow occurs if the product exceeds the maximum N-1 bit magnitude
         ovr = (magnitude_product > THRESHOLD);
     end
 

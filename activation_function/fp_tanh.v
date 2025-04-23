@@ -41,7 +41,7 @@ module tanh #(
     );
     
     assign y = final_result[N-1] ? 
-        {1'b1, final_result[N-2:0]} :  // Maintain sign-magnitude
+        {1'b1, final_result[N-2:0]} : 
         final_result;
     
 endmodule

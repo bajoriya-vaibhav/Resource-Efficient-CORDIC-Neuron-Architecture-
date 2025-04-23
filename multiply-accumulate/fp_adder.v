@@ -1,5 +1,4 @@
 module qadd #(
-	//Parameterized values
 	parameter Q = 15,
 	parameter N = 32
 	)
@@ -20,14 +19,12 @@ always @(a,b) begin
     sum_mag = 0;
     ovr_reg = 0;
     res = 0;
-	// both negative or both positive
 	if(a[N-1] == b[N-1]) begin		
         sum_mag = a[N-2:0] + b[N-2:0];		
 		res[N-2:0] = a[N-2:0] + b[N-2:0];	 	
 		res[N-1] = a[N-1];				
         ovr_reg = sum_mag[N-1];
-	    end												
-	//	one of them is negative...
+	    end							
 	else if(a[N-1] == 0 && b[N-1] == 1) begin		
 		if( a[N-2:0] > b[N-2:0] ) begin					
 			res[N-2:0] = a[N-2:0] - b[N-2:0];			

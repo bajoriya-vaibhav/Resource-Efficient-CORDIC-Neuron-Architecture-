@@ -20,6 +20,33 @@ physical parameters. All implementation has been realised on a 32 bit fixed poin
 We have implemented a standard neuron architecture(without using CORDIC) for comparison with RECON architecture. Implementation of activation functions in standard neuron 
 architecture is done with the help of a piecewise function(Reference will be linked).
 
+## Project structure
+- CORDIC
+  - Matlab
+  - Verilog
+- activation_function
+- multiply-accumulate
+- traditional_neuron_with_mac_maf
+- CORDIC_Neuron.ipynb
+- Normal_Neuron_.ipynb
+
+## Usage
+
+### CORDIC architecture
+
+The CORDIC directory contains two subdirectories, namely Matlab and Verilog. Matlab only has code for test case generation for activation function and division. 
+Verilog directory contains the actual code for the architecture, to run it directly using iverilog, use the commands
+
+```bash
+iverilog cordic_neuron.v cordic_neuron_tb.v cordictanh.v cordicdiv.v cordic_mac.v atanh_LOOKUP.v
+vvp ./a.out
+```
+The other verilog files are testbenches for testing the functionalities for individual modules. For top module, the given test cases in cordic_neuron_tb.v are pretty
+basic and do not provide rigorous testing for the architecture, one can manipulate the matlab code a little to get files for rigorous testing of the module.
+Though rigorous testing on individual modules is a confident indicator that the whole architecture would be able to handle rigorous testing at the same level.
+
+
+
 ## CORDIC Algorithm
 <b>NOTE:- If you are already aware on the theory of CORDIC algorithm, skip this section <p> </b>
 The COordinate Rotation DIgital Computer (CORDIC) algorithm realizes various mathematical functions by rotating vector coodinates. CORDIC algorithm works similar
@@ -51,7 +78,30 @@ CORDIC algorithm.
 ![Cordic math 5](recon_assets/cordic_math_5.png)
 
 z is the current angle, we are supposed to repeat the iterations till z reaches zero or we reach the end of the lookup table. The decision coefficient(d) is used to
-determine whether to add or subtract the step size, if the addition of the previous step size 
+determine whether to add or subtract the step size, if the addition of the previous step size.
+
+### Rotation and Vector mode
+
+CORDIC algorithm can be used in two modes, namely rotation and vector modes. In rotation mode, we take a vector and rotate it by some angle z, converging our x and y
+coordinates of the vector to parameterised coordinates of the curve(Polar in case of circles, Hyperbolic in case of Hyperbola, cartesian in case of line etc). 
+![Cordic math 6](recon_assets/cordic_math_6.png)
+
+In vector mode, we want to find the phase of a vector that is on some curve by rotating the vector towards x axis along the curve. 
+![Cordic math 7](recon_assets/cordic_math_7.png)
+
+### Generalised CORDIC algorithm
+
+We can consider our derivation procedure for CORDIC along a parametrised curve rather than a fixed one now <br>
+![Cordic math 8](recon_assets/cordic_math_8.png)
+![Cordic math 9](recon_assets/cordic_math_9.png)
+
+Note that scaling factors for different values of m will also be different. For most applications, we consider only three values of m, m = 0, 1, -1 as they represent line, circle and hyperbola. Their results can be seen below. <br>
+![Cordic math 10](recon_assets/cordic_math_10.png)
+
+Some further minor details have been taken care of while doing verilog implementations(eg - hyperbolic convergence), they have been mentioned in the comments
+in the code, mathematical details on those are high order and irrelevant for the scope of this project.
+
+
 
 
 
